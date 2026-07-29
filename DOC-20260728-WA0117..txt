@@ -1,0 +1,112 @@
+CANTIDAD_EQUIPOS = 32
+TOTAL_PARTIDOS = 48
+MAX_USUARIOS = 100
+
+registeredEmails = [""] * MAX_USUARIOS
+totalRegistered = 0
+
+userPredictions = [["" for _ in range(4)] for _ in range(TOTAL_PARTIDOS)]
+
+
+def getRealResults():
+    realMatrix = [["" for _ in range(4)] for _ in range(TOTAL_PARTIDOS)]
+    
+    realMatrix[0] = ["Qatar", "Ecuador", "0", "2"]
+    realMatrix[1] = ["Inglaterra", "Irán", "6", "2"]
+    realMatrix[2] = ["Senegal", "Países Bajos", "0", "2"]
+    realMatrix[3] = ["Argentina", "Arabia Saudita", "1", "2"]
+    realMatrix[4] = ["España", "Costa Rica", "7", "0"]
+    realMatrix[5] = ["Alemania", "Japón", "1", "2"]
+    realMatrix[6] = ["México", "Polonia", "0", "0"]
+    realMatrix[7] = ["Francia", "Australia", "4", "1"]
+    
+    for i in range(8, TOTAL_PARTIDOS):
+        realMatrix[i] = [f"Equipo_{i*2+1}", f"Equipo_{i*2+2}", "1", "1"]
+        
+    return realMatrix
+
+
+def register(email):
+    global totalRegistered
+    
+    if totalRegistered >= MAX_USUARIOS:
+        return False
+    
+    for i in range(totalRegistered):
+        if registeredEmails[i] == email:
+            return False
+            
+    registeredEmails[totalRegistered] = email
+    totalRegistered += 1
+    return True
+
+
+def loadPredictions(partido_index, eq1, eq2, goles1, goles2):
+    global userPredictions
+    
+    if partido_index < 0 or partido_index >= TOTAL_PARTIDOS:
+        return False
+        
+    userPredictions[partido_index][2] = str(eq1)
+    userPredictions[partido_index][3] = str(eq2)
+    userPredictions[partido_index][0] = str(goles1)
+    userPredictions[partido_index][1] = str(goles2)
+    
+    return True
+
+
+def calculateScore(email):
+    existe = False
+    for i in range(totalRegistered):
+        if registeredEmails[i] == email:
+            existe = True
+            break
+            
+    if not existe:
+        return 0
+
+    real_matrix = getRealResults()
+    puntaje_total = 0
+    
+    for i in range(TOTAL_PARTIDOS):
+        if userPredictions[i][0] == "" or userPredictions[i][1] == "":
+            continue
+            
+        pred_goles1 = int(userPredictions[i][0])
+        pred_goles2 = int(userPredictions[i][1])
+        
+        real_goles1 = int(real_matrix[i][2])
+        real_goles2 = int(real_matrix[i][3])
+        
+        res_pred = 1 if pred_goles1 > pred_goles2 else (2 if pred_goles2 > pred_goles1 else 0)
+        res_real = 1 if real_goles1 > real_goles2 else (2 if real_goles2 > real_goles1 else 0)
+        
+        puntos = 0
+        
+        if pred_goles1 == real_goles1 and pred_goles2 == real_goles2:
+            puntos = 5
+        else:
+            if res_pred == res_real:
+                puntos += 3
+                
+                if res_real == 1 and pred_goles1 == real_goles1:
+                    puntos += 2
+                elif res_real == 2 and pred_goles2 == real_goles2:
+                    puntos += 2
+                    
+        puntaje_total += puntos
+        
+    return puntaje_total
+
+
+if __name__ == "__main__":
+    register("carlos@correo.com")
+    register("ana@correo.com")
+
+    loadPredictions(0, "Qatar", "Ecuador", 0, 2)
+    loadPredictions(1, "Inglaterra", "Irán", 3, 1)
+    loadPredictions(2, "Senegal", "Países Bajos", 1, 2)
+    loadPredictions(6, "México", "Polonia", 0, 0)
+
+    puntos = calculateScore("carlos@correo.com")
+    print(f"Puntaje total de carlos@correo.com: {puntos} puntos")
